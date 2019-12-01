@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>nextTick | JS 事件循环原理与异步机制解析</title>
+    <meta name="description" content="Analysis vue.js deeply">
+    <link rel="icon" href="/JS-Event-Loop/logo.png">
+  <link rel="manifest" href="/JS-Event-Loop/manifest.json">
+  <meta name="theme-color" content="#3eaf7c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="apple-touch-icon" href="/JS-Event-Loop/icons/apple-touch-icon-152x152.png">
+  <link rel="mask-icon" href="/JS-Event-Loop/icons/safari-pinned-tab.svg" color="#3eaf7c">
+  <meta name="msapplication-TileImage" content="/icons/msapplication-icon-144x144.png">
+  <meta name="msapplication-TileColor" content="#000000">
+    
+    <link rel="preload" href="/JS-Event-Loop/assets/css/0.styles.4bd8d34c.css" as="style"><link rel="preload" href="/JS-Event-Loop/assets/js/app.25665c49.js" as="script"><link rel="preload" href="/JS-Event-Loop/assets/js/2.83f650ae.js" as="script"><link rel="preload" href="/JS-Event-Loop/assets/js/24.8aa876da.js" as="script"><link rel="prefetch" href="/JS-Event-Loop/assets/js/10.af646ce3.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/11.7ef8ca1c.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/12.ba4224e9.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/13.48b834c9.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/14.ed5ef665.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/15.3452cf13.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/16.1b045293.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/17.5bc32494.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/18.b07221de.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/19.118ef21f.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/20.800f0c9a.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/21.7b81fccf.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/22.646c166c.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/23.0ddf253d.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/25.16316a78.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/26.55bb5aea.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/3.00812dad.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/4.d59dfcd1.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/5.8c4f1e7d.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/6.815506cc.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/7.d76cce3f.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/8.82bb9e43.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/9.be7d99bc.js">
+    <link rel="stylesheet" href="/JS-Event-Loop/assets/css/0.styles.4bd8d34c.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/JS-Event-Loop/" class="home-link router-link-active"><!----> <span class="site-name">JS 事件循环原理与异步机制解析</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="https://github.com/Jecyu/JS-Event-Loop/tree/master/examples" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  配套例子
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/Jecyu/JS-Event-Loop" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="https://github.com/Jecyu/JS-Event-Loop/tree/master/examples" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  配套例子
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/Jecyu/JS-Event-Loop" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>回顾硬核知识：栈和队列</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/dataStructure/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/dataStructure/stack.html" class="sidebar-link">栈</a></li><li><a href="/JS-Event-Loop/dataStructure/queue.html" class="sidebar-link">队列</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>说说 CPU 层面的运作</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/cpu/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/cpu/program-workflow.html" class="sidebar-link">CPU 是如何执行程序的</a></li><li><a href="/JS-Event-Loop/cpu/concept.html" class="sidebar-link">一些关键概念</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>谈谈浏览器背后的运行机制</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/browser/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/browser/multi-process.html" class="sidebar-link">浏览器是多进程的</a></li><li><a href="/JS-Event-Loop/browser/thread-relationship.html" class="sidebar-link">梳理浏览器内核中线程之间的关系</a></li><li><a href="/JS-Event-Loop/browser/render-process.html" class="sidebar-link">浏览器渲染流程</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>深入剖析 JS 事件循环原理</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/event-loop/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/event-loop/eventloop.html" class="sidebar-link">从 Event Loop 谈 JS 的运行机制</a></li><li><a href="/JS-Event-Loop/event-loop/eventloop-more.html" class="sidebar-link">Event loop 进阶：macrotask 与 microtask</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>Vue 异步更新策略：nextTick</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/vue-nextTick/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/vue-nextTick/reactive-object.html" class="sidebar-link">响应式对象</a></li><li><a href="/JS-Event-Loop/vue-nextTick/nextTick.html" class="active sidebar-link">nextTick</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/JS-Event-Loop/vue-nextTick/nextTick.html#js-的运行机制" class="sidebar-link">JS 的运行机制</a></li><li class="sidebar-sub-header"><a href="/JS-Event-Loop/vue-nextTick/nextTick.html#vue-的实现" class="sidebar-link">Vue 的实现</a></li></ul></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>问题</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/tip/" class="sidebar-link">介绍</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>参考资料</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/refs/" class="sidebar-link">Introduction</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="nexttick"><a href="#nexttick" class="header-anchor">#</a> nextTick</h1> <h2 id="js-的运行机制"><a href="#js-的运行机制" class="header-anchor">#</a> JS 的运行机制</h2> <p>JS 是单线程的，它是基于事件循环的。事件循环大致分为以下几个步骤：</p> <ol><li>所有同步任务都是在主线程上，形成一个执行栈（execution context stack）。</li> <li>主线程之外，还存在“任务队列”（task queue）。只要异步任务有了运行结构，就在“任务队列”之中放置一个事件。</li> <li>一旦“执行栈”中的所有同步任务执行完毕，系统就会读取“任务队列”，看看里面有哪些事件。那些对应的异步任务，于是结束等待状态，进入执行栈，开始执行。</li> <li>主线程不断重复上面的第三步。</li></ol> <p>主线程的执行过程就是一个 tick，而所有的异步结果都是通过“任务队列”来调度。消息队列中存放的是一个个的任务（task）。规范中规定“task”分为两大类，分别是 macor 和 microtask，并且每个 macrotask 结束后，都要清空所有 microtask。</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">for</span> <span class="token punctuation">(</span>macroTask <span class="token keyword">of</span> macroTaskQueue<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// 1. Handle current MACRO-TASK</span>
+  <span class="token function">handleMacroTask</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment">// 2. Handle all MICRO-TASK</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span>microTask <span class="token keyword">of</span> microTaskQueue<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">handleMicroTask</span><span class="token punctuation">(</span>microTask<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p>在浏览器环境中，常见的 macro task 有 setTimeout、MessageChannel、postMessage、setImmediate；
+常见的 micro task 有 MutationObserver 和 Promise.then。</p> <h2 id="vue-的实现"><a href="#vue-的实现" class="header-anchor">#</a> Vue 的实现</h2> <div class="language-js extra-class"><pre class="language-js"><code><span class="token comment">/* @flow */</span>
+<span class="token comment">/* globals MessageChannel */</span>
+
+<span class="token keyword">import</span> <span class="token punctuation">{</span> noop <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'shared/util'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> handleError <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./error'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> isIOS<span class="token punctuation">,</span> isNative <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./env'</span>
+
+<span class="token keyword">const</span> callbacks <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token keyword">let</span> pending <span class="token operator">=</span> <span class="token boolean">false</span>
+
+<span class="token keyword">function</span> <span class="token function">flushCallbacks</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  pending <span class="token operator">=</span> <span class="token boolean">false</span>
+  <span class="token keyword">const</span> copies <span class="token operator">=</span> callbacks<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+  callbacks<span class="token punctuation">.</span>length <span class="token operator">=</span> <span class="token number">0</span>
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> copies<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    copies<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// Here we have async deferring wrappers using both microtasks and (macro) tasks.</span>
+<span class="token comment">// In &lt; 2.4 we used microtasks everywhere, but there are some scenarios where</span>
+<span class="token comment">// microtasks have too high a priority and fire in between supposedly</span>
+<span class="token comment">// sequential events (e.g. #4521, #6690) or even between bubbling of the same</span>
+<span class="token comment">// event (#6566). However, using (macro) tasks everywhere also has subtle problems</span>
+<span class="token comment">// when state is changed right before repaint (e.g. #6813, out-in transitions).</span>
+<span class="token comment">// Here we use microtask by default, but expose a way to force (macro) task when</span>
+<span class="token comment">// needed (e.g. in event handlers attached by v-on).</span>
+<span class="token keyword">let</span> microTimerFunc
+<span class="token keyword">let</span> macroTimerFunc
+<span class="token keyword">let</span> useMacroTask <span class="token operator">=</span> <span class="token boolean">false</span>
+
+<span class="token comment">// Determine (macro) task defer implementation.</span>
+<span class="token comment">// Technically setImmediate should be the ideal choice, but it's only available</span>
+<span class="token comment">// in IE. The only polyfill that consistently queues the callback after all DOM</span>
+<span class="token comment">// events triggered in the same loop is by using MessageChannel.</span>
+<span class="token comment">/* istanbul ignore if */</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> setImmediate <span class="token operator">!==</span> <span class="token string">'undefined'</span> <span class="token operator">&amp;&amp;</span> <span class="token function">isNative</span><span class="token punctuation">(</span>setImmediate<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function-variable function">macroTimerFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token function">setImmediate</span><span class="token punctuation">(</span>flushCallbacks<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> MessageChannel <span class="token operator">!==</span> <span class="token string">'undefined'</span> <span class="token operator">&amp;&amp;</span> <span class="token punctuation">(</span>
+  <span class="token function">isNative</span><span class="token punctuation">(</span>MessageChannel<span class="token punctuation">)</span> <span class="token operator">||</span>
+  <span class="token comment">// PhantomJS</span>
+  MessageChannel<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">===</span> <span class="token string">'[object MessageChannelConstructor]'</span>
+<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> channel <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">MessageChannel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token keyword">const</span> port <span class="token operator">=</span> channel<span class="token punctuation">.</span>port2
+  channel<span class="token punctuation">.</span>port1<span class="token punctuation">.</span>onmessage <span class="token operator">=</span> flushCallbacks
+  <span class="token function-variable function">macroTimerFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    port<span class="token punctuation">.</span><span class="token function">postMessage</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+  <span class="token comment">/* istanbul ignore next */</span>
+  <span class="token function-variable function">macroTimerFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token function">setTimeout</span><span class="token punctuation">(</span>flushCallbacks<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// Determine microtask defer implementation.</span>
+<span class="token comment">/* istanbul ignore next, $flow-disable-line */</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">typeof</span> Promise <span class="token operator">!==</span> <span class="token string">'undefined'</span> <span class="token operator">&amp;&amp;</span> <span class="token function">isNative</span><span class="token punctuation">(</span>Promise<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> p <span class="token operator">=</span> Promise<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token function-variable function">microTimerFunc</span> <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    p<span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span>flushCallbacks<span class="token punctuation">)</span>
+    <span class="token comment">// in problematic UIWebViews, Promise.then doesn't completely break, but</span>
+    <span class="token comment">// it can get stuck in a weird state where callbacks are pushed into the</span>
+    <span class="token comment">// microtask queue but the queue isn't being flushed, until the browser</span>
+    <span class="token comment">// needs to do some other work, e.g. handle a timer. Therefore we can</span>
+    <span class="token comment">// &quot;force&quot; the microtask queue to be flushed by adding an empty timer.</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>isIOS<span class="token punctuation">)</span> <span class="token function">setTimeout</span><span class="token punctuation">(</span>noop<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+  <span class="token comment">// fallback to macro</span>
+  microTimerFunc <span class="token operator">=</span> macroTimerFunc
+<span class="token punctuation">}</span>
+
+<span class="token comment">/**
+ * Wrap a function so that if any code inside triggers state change,
+ * the changes are queued using a (macro) task instead of a microtask.
+ */</span>
+<span class="token keyword">export</span> <span class="token keyword">function</span> <span class="token function">withMacroTask</span> <span class="token punctuation">(</span><span class="token parameter">fn<span class="token punctuation">:</span> Function</span><span class="token punctuation">)</span><span class="token punctuation">:</span> Function <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> fn<span class="token punctuation">.</span>_withTask <span class="token operator">||</span> <span class="token punctuation">(</span>fn<span class="token punctuation">.</span><span class="token function-variable function">_withTask</span> <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    useMacroTask <span class="token operator">=</span> <span class="token boolean">true</span>
+    <span class="token keyword">const</span> res <span class="token operator">=</span> <span class="token function">fn</span><span class="token punctuation">.</span><span class="token function">apply</span><span class="token punctuation">(</span><span class="token keyword">null</span><span class="token punctuation">,</span> arguments<span class="token punctuation">)</span>
+    useMacroTask <span class="token operator">=</span> <span class="token boolean">false</span>
+    <span class="token keyword">return</span> res
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">export</span> <span class="token keyword">function</span> <span class="token function">nextTick</span> <span class="token punctuation">(</span><span class="token parameter">cb<span class="token operator">?</span><span class="token punctuation">:</span> Function<span class="token punctuation">,</span> ctx<span class="token operator">?</span><span class="token punctuation">:</span> Object</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">let</span> _resolve
+  callbacks<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>cb<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">try</span> <span class="token punctuation">{</span>
+        <span class="token function">cb</span><span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span>ctx<span class="token punctuation">)</span>
+      <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">handleError</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span> ctx<span class="token punctuation">,</span> <span class="token string">'nextTick'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>_resolve<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">_resolve</span><span class="token punctuation">(</span>ctx<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>pending<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    pending <span class="token operator">=</span> <span class="token boolean">true</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>useMacroTask<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">macroTimerFunc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token function">microTimerFunc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// $flow-disable-line</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>cb <span class="token operator">&amp;&amp;</span> <span class="token keyword">typeof</span> Promise <span class="token operator">!==</span> <span class="token string">'undefined'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Promise</span><span class="token punctuation">(</span><span class="token parameter">resolve</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+      _resolve <span class="token operator">=</span> resolve
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><p><code>next-tick.js</code> 声明了 <code>microTimerFunc</code> 和 <code>macroTimerFunc</code> 2 个变量，它们分别对应的是 microTask 的函数和 macro task 的函数。对于 macro task 的实现，优先监测是否支持原生的 <code>setImmediate</code>，这是一个高版本 IE 和 Edge 才支持的特性。不支持的话再去检测是否支持原生的 <code>MessageChannel</code>，如果也不支持的话就会降级为 s<code>etTimeout 0</code>；而对于 micro task 的实现，则检测浏览器是否原生支持 <code>Promise</code>，不支持的话直接指向 macro task 的实现。</p> <p><code>next-tick.js</code> 对外暴露了2个函数，先来看 <code>nextTick</code> ，这就是我们在上一节执行 <code>nextTick(flushSchedulerQueue)</code> 所用到的函数。它的逻辑是这样的：</p> <ol><li>把 传入的回调函数 <code>cb</code> 压入 <code>callbacks</code> 数组；</li> <li>最后一次性根据<code>useMacroTask</code> 条件执行 <code>macroTimerFunc</code> 或者是 <code>microTimerFunc</code> ，而它们都会在下一个 <code>tick</code> 执行 <code>flushCallbacks</code></li> <li><code>flushCallbacks</code> 对 <code>callbacks</code> 遍历，然后执行响应的回调函数。</li></ol> <h3 id="什么时候执行-mictrotask-的处理，什么时候执行-macrotask-的处理？"><a href="#什么时候执行-mictrotask-的处理，什么时候执行-macrotask-的处理？" class="header-anchor">#</a> 什么时候执行 mictroTask 的处理，什么时候执行 macroTask 的处理？</h3> <p>通过 <code>next-tick.js</code> 对外暴露了 <code>withMacroTask</code> 函数，它是对函数做一层包装，确保函数执行过程中对数据任意的修改，触发变化执行 <code>nextTick</code> 的时候强制走 <code>macroTimerFunc</code>。比如对于一些 DOM 交互事件，如 <code>v-on</code> 绑定的事件回调函数的处理，会强制走 macro task。</p> <p>下面是 <code>event.js</code> 注册事件时，引用了 <code>withMacroTask</code> 函数。<code>plaform/web/runtime/modules/event.js</code></p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token operator">...</span>
+
+<span class="token keyword">function</span> <span class="token function">add</span> <span class="token punctuation">(</span>
+  <span class="token parameter">event<span class="token punctuation">:</span> string<span class="token punctuation">,</span>
+  handler<span class="token punctuation">:</span> Function<span class="token punctuation">,</span>
+  once<span class="token punctuation">:</span> boolean<span class="token punctuation">,</span>
+  capture<span class="token punctuation">:</span> boolean<span class="token punctuation">,</span>
+  passive<span class="token punctuation">:</span> boolean</span>
+<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  handler <span class="token operator">=</span> <span class="token function">withMacroTask</span><span class="token punctuation">(</span>handler<span class="token punctuation">)</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>once<span class="token punctuation">)</span> handler <span class="token operator">=</span> <span class="token function">createOnceHandler</span><span class="token punctuation">(</span>handler<span class="token punctuation">,</span> event<span class="token punctuation">,</span> capture<span class="token punctuation">)</span>
+  target<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span>
+    event<span class="token punctuation">,</span>
+    handler<span class="token punctuation">,</span>
+    supportsPassive
+      <span class="token operator">?</span> <span class="token punctuation">{</span> capture<span class="token punctuation">,</span> passive <span class="token punctuation">}</span>
+      <span class="token punctuation">:</span> capture
+  <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token operator">...</span>
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/Jecyu/JS-Event-Loop/edit/master/docs/vue-nextTick/nextTick.md" target="_blank" rel="noopener noreferrer">在 GitHub 上编辑此页</a> <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></div> <div class="last-updated"><span class="prefix">上次更新:</span> <span class="time">11/29/2019, 5:51:25 PM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/JS-Event-Loop/vue-nextTick/reactive-object.html" class="prev">响应式对象</a></span> <span class="next"><a href="/JS-Event-Loop/tip/">介绍</a>
+      →
+    </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/JS-Event-Loop/assets/js/app.25665c49.js" defer></script><script src="/JS-Event-Loop/assets/js/2.83f650ae.js" defer></script><script src="/JS-Event-Loop/assets/js/24.8aa876da.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>队列 | JS 事件循环原理与异步机制解析</title>
+    <meta name="description" content="Analysis vue.js deeply">
+    <link rel="icon" href="/JS-Event-Loop/logo.png">
+  <link rel="manifest" href="/JS-Event-Loop/manifest.json">
+  <meta name="theme-color" content="#3eaf7c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="apple-touch-icon" href="/JS-Event-Loop/icons/apple-touch-icon-152x152.png">
+  <link rel="mask-icon" href="/JS-Event-Loop/icons/safari-pinned-tab.svg" color="#3eaf7c">
+  <meta name="msapplication-TileImage" content="/icons/msapplication-icon-144x144.png">
+  <meta name="msapplication-TileColor" content="#000000">
+    
+    <link rel="preload" href="/JS-Event-Loop/assets/css/0.styles.4bd8d34c.css" as="style"><link rel="preload" href="/JS-Event-Loop/assets/js/app.25665c49.js" as="script"><link rel="preload" href="/JS-Event-Loop/assets/js/2.83f650ae.js" as="script"><link rel="preload" href="/JS-Event-Loop/assets/js/10.af646ce3.js" as="script"><link rel="prefetch" href="/JS-Event-Loop/assets/js/11.7ef8ca1c.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/12.ba4224e9.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/13.48b834c9.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/14.ed5ef665.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/15.3452cf13.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/16.1b045293.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/17.5bc32494.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/18.b07221de.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/19.118ef21f.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/20.800f0c9a.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/21.7b81fccf.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/22.646c166c.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/23.0ddf253d.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/24.8aa876da.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/25.16316a78.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/26.55bb5aea.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/3.00812dad.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/4.d59dfcd1.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/5.8c4f1e7d.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/6.815506cc.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/7.d76cce3f.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/8.82bb9e43.js"><link rel="prefetch" href="/JS-Event-Loop/assets/js/9.be7d99bc.js">
+    <link rel="stylesheet" href="/JS-Event-Loop/assets/css/0.styles.4bd8d34c.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/JS-Event-Loop/" class="home-link router-link-active"><!----> <span class="site-name">JS 事件循环原理与异步机制解析</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="https://github.com/Jecyu/JS-Event-Loop/tree/master/examples" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  配套例子
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/Jecyu/JS-Event-Loop" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="https://github.com/Jecyu/JS-Event-Loop/tree/master/examples" target="_blank" rel="noopener noreferrer" class="nav-link external">
+  配套例子
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></div> <a href="https://github.com/Jecyu/JS-Event-Loop" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>回顾硬核知识：栈和队列</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/dataStructure/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/dataStructure/stack.html" class="sidebar-link">栈</a></li><li><a href="/JS-Event-Loop/dataStructure/queue.html" class="active sidebar-link">队列</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/JS-Event-Loop/dataStructure/queue.html#创建队列" class="sidebar-link">创建队列</a></li><li class="sidebar-sub-header"><a href="/JS-Event-Loop/dataStructure/queue.html#使用队列来解决问题" class="sidebar-link">使用队列来解决问题</a></li><li class="sidebar-sub-header"><a href="/JS-Event-Loop/dataStructure/queue.html#小结" class="sidebar-link">小结</a></li></ul></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>说说 CPU 层面的运作</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/cpu/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/cpu/program-workflow.html" class="sidebar-link">CPU 是如何执行程序的</a></li><li><a href="/JS-Event-Loop/cpu/concept.html" class="sidebar-link">一些关键概念</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>谈谈浏览器背后的运行机制</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/browser/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/browser/multi-process.html" class="sidebar-link">浏览器是多进程的</a></li><li><a href="/JS-Event-Loop/browser/thread-relationship.html" class="sidebar-link">梳理浏览器内核中线程之间的关系</a></li><li><a href="/JS-Event-Loop/browser/render-process.html" class="sidebar-link">浏览器渲染流程</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>深入剖析 JS 事件循环原理</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/event-loop/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/event-loop/eventloop.html" class="sidebar-link">从 Event Loop 谈 JS 的运行机制</a></li><li><a href="/JS-Event-Loop/event-loop/eventloop-more.html" class="sidebar-link">Event loop 进阶：macrotask 与 microtask</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>Vue 异步更新策略：nextTick</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/vue-nextTick/" class="sidebar-link">介绍</a></li><li><a href="/JS-Event-Loop/vue-nextTick/reactive-object.html" class="sidebar-link">响应式对象</a></li><li><a href="/JS-Event-Loop/vue-nextTick/nextTick.html" class="sidebar-link">nextTick</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>问题</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/tip/" class="sidebar-link">介绍</a></li></ul></section></li><li><section class="sidebar-group depth-0"><p class="sidebar-heading"><span>参考资料</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/JS-Event-Loop/refs/" class="sidebar-link">Introduction</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="队列"><a href="#队列" class="header-anchor">#</a> 队列</h1> <p>队列是遵循先进先出（<strong>FIFO</strong>，也称为先来先服务）原则的一组有序的项。队列在尾部添加新元素，并从顶部移除元素。最新添加的元素必须排在队列的末尾。</p> <p>在现实中，最常见的队列的例子就是排队。</p> <p><img src="/JS-Event-Loop/assets/img/queue.af24c231.jpg" alt="queue"></p> <p>在电影院、自助餐厅、杂货店收银台，我们都会排队。排在第一位的人会先接受服务。
+在计算机科学中，一个常见的例子就是打印队列。比如说，我们需要打印五份文档。我们会打开每个文档，然后点击打印按钮。每个文档都会被发送至打印队列。第一个发送到打印队列的文档会首先被打印，以此类推，直到打印完所有文档。</p> <h2 id="创建队列"><a href="#创建队列" class="header-anchor">#</a> 创建队列</h2> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token keyword">class</span> <span class="token class-name">Queue</span> <span class="token punctuation">{</span>
+  <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>count <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token comment">// 控制队列的大小</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token comment">// 用于追踪第一元素，便于从队列前端移除元素</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>items <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span> <span class="token comment">// 用对象存储我们的元素</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">/**
+   * 向队列添加元素
+   * 该方法负责向队列添加新元素，新的项只能添加到队列末尾。
+   * @param {*} element 
+   */</span>
+  <span class="token function">enqueue</span><span class="token punctuation">(</span><span class="token parameter">element</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>items<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>count<span class="token punctuation">]</span> <span class="token operator">=</span> element<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>count<span class="token operator">++</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">/**
+   * 从队列移除元素
+   */</span>
+  <span class="token function">dequeue</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">return</span> <span class="token keyword">undefined</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>items<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token comment">// 暂存队列头部的值，以便改元素被移除后将它返回</span>
+    <span class="token keyword">delete</span> <span class="token keyword">this</span><span class="token punctuation">.</span>items<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount<span class="token operator">++</span><span class="token punctuation">;</span> <span class="token comment">// 属性+ 1</span>
+    <span class="token keyword">return</span> result<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">/**
+   * 查看队列头元素
+   */</span>
+  <span class="token function">peek</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">return</span> <span class="token keyword">undefined</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>items<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount<span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">/**
+   * 检查队列是否为空并获取它的长度
+   */</span>
+  <span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>count <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount <span class="token operator">===</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token comment">// 要计算队列中有多少元素，我们只需要计算 count 和 lowestCount 之间的差值</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">/**
+   * 计算队列中有多少元素
+   */</span>
+  <span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>count <span class="token operator">-</span> <span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">/**
+   * 清空队列
+   * 要清空队列，我们可以调用 dequeue 方法直到它返回 undefined，也可以简单地将队列中的舒心值重设为和构造函数的一样。
+   * @memberof Queue
+   */</span>
+  <span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>items <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>count <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">return</span> <span class="token string">''</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">let</span> objString <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span>items<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount<span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>lowestCount <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token keyword">this</span><span class="token punctuation">.</span>count<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      objString <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>objString<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">,</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span>items<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> objString<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="使用队列来解决问题"><a href="#使用队列来解决问题" class="header-anchor">#</a> 使用队列来解决问题</h2> <h3 id="循环队列——击鼓传花游戏"><a href="#循环队列——击鼓传花游戏" class="header-anchor">#</a> 循环队列——击鼓传花游戏</h3> <p><img src="/JS-Event-Loop/assets/img/queue-loop-boom.eef8534a.jpg" alt="queue-loop-boom"></p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">import</span> Queue <span class="token keyword">from</span> <span class="token string">&quot;../data-structures/queue&quot;</span>
+<span class="token comment">/**
+ * 模拟击鼓传花
+ * 循环队列。在这个游戏中，孩子们围成一个圆圈，把花尽快传递给旁边的人。某一时刻传花停止，这个时候花在谁手上，谁就退出圆圈，结束游戏。
+ * 重复这个过程，直到只剩一个孩子（胜者）。
+ * @export
+ * @param {*} elementsList 要入列的元素
+ * @param {*} num // 达到给定的传递次数。 // 可以随机输入
+ */</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token keyword">function</span> <span class="token function">hotPotato</span><span class="token punctuation">(</span><span class="token parameter">elementsList<span class="token punctuation">,</span> num</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> queue <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Queue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> elimitatedList <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> elementsList<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    queue<span class="token punctuation">.</span><span class="token function">enqueue</span><span class="token punctuation">(</span>elementsList<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">while</span> <span class="token punctuation">(</span>queue<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&gt;</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 循环队列，给定一个数字，然后迭代队列。从队列开头移除一项，再将其添加到队列末尾，模拟击鼓传花。</span>
+    <span class="token comment">// 一旦达到给定的传递次数，拿着花的那个人就被淘汰了。（从队列中移除）</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> num<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      queue<span class="token punctuation">.</span><span class="token function">enqueue</span><span class="token punctuation">(</span>queue<span class="token punctuation">.</span><span class="token function">dequeue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    elimitatedList<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>queue<span class="token punctuation">.</span><span class="token function">dequeue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+  <span class="token keyword">return</span> <span class="token punctuation">{</span>
+    elimitated<span class="token punctuation">:</span> elimitatedList<span class="token punctuation">,</span>
+    winner<span class="token punctuation">:</span> queue<span class="token punctuation">.</span><span class="token function">dequeue</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h3 id="优先队列"><a href="#优先队列" class="header-anchor">#</a> 优先队列</h3> <p>元素的添加和移除是基于优先级的。一个现实的例子就是机场登机的顺序。头等舱和商务舱的乘客的优先级要高于经济舱乘客。另一个现实中的例子是医院的（急诊科）候诊室，医生会优先处理病情比较严重的患者。通常，护士会鉴别分类，根据患者病情的严重程度放号。</p> <p>实现一个优先队列，有两种选项：设置优先级，然后在正确的位置添加元素；或者用入列操作添加元素，然后按照优先优先级移除它们。</p> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">function</span> <span class="token function">PriorityQueue</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> items <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+  <span class="token comment">// 特殊的 priority 元素</span>
+  <span class="token keyword">function</span> <span class="token function">QueueElement</span> <span class="token punctuation">(</span><span class="token parameter">element<span class="token punctuation">,</span> priority</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> 
+    <span class="token keyword">this</span><span class="token punctuation">.</span>element <span class="token operator">=</span> element<span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>priority <span class="token operator">=</span> priority<span class="token punctuation">;</span> <span class="token comment">// 优先级</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function-variable function">enqueue</span> <span class="token operator">=</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">element<span class="token punctuation">,</span> priority</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> queueElement <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">QueueElement</span><span class="token punctuation">(</span>element<span class="token punctuation">,</span> priority<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment">// 如果队列为空，可以直接入列  </span>
+      items<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>queueElement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      <span class="token keyword">let</span> added <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+      <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> items<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>queueElement<span class="token punctuation">.</span>priority <span class="token operator">&lt;</span> items<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>priority<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment">// 判断优先级再入列</span>
+          items<span class="token punctuation">.</span><span class="token function">splice</span><span class="token punctuation">(</span>i<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> queueElement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+          added <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+          <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>added<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        items<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>queueElement<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+  <span class="token comment">// 其他方法类似</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment">// 使用</span>
+<span class="token keyword">let</span> priorityQueue <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">PriorityQueue</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+priorityQueue<span class="token punctuation">.</span><span class="token function">enqueue</span><span class="token punctuation">(</span><span class="token string">&quot;Jecyu&quot;</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+priorityQueue<span class="token punctuation">.</span><span class="token function">enqueue</span><span class="token punctuation">(</span><span class="token string">&quot;Crazy&quot;</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+priorityQueue<span class="token punctuation">.</span><span class="token function">enqueue</span><span class="token punctuation">(</span><span class="token string">&quot;Linjy&quot;</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+</code></pre></div><h3 id="javascript-任务队列"><a href="#javascript-任务队列" class="header-anchor">#</a> JavaScript 任务队列</h3> <p><u>当我们在浏览器中打开标签时，就会创建一个任务队列。</u>这是因为每个标签都是单线程处理所有的任务，成为事件循环。浏览器要负责多个任务，如渲染 HTML、执行 JavaScript 代码、处理用户交互（用户输入、鼠标点击等）、执行和处理异步请求。具体后面浏览器章节会详细蛇戒。</p> <h2 id="小结"><a href="#小结" class="header-anchor">#</a> 小结</h2> <p>这一节我们学习了队列这种数据结构。我们实现了自己的队列算法，学习了两种非常著名的特殊队列的实现：优先队列和循环队列，以及最后与事件循环息息相关的 JavaScript 任务队列，与事件循环相关的数据结构栈和队列基本结束。下一章，我们将会说说CPU层面的运作，进程与线程、异步同步等知识。</p></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/Jecyu/JS-Event-Loop/edit/master/docs/dataStructure/queue.md" target="_blank" rel="noopener noreferrer">在 GitHub 上编辑此页</a> <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></div> <div class="last-updated"><span class="prefix">上次更新:</span> <span class="time">11/28/2019, 9:28:50 AM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/JS-Event-Loop/dataStructure/stack.html" class="prev">栈</a></span> <span class="next"><a href="/JS-Event-Loop/cpu/">介绍</a>
+      →
+    </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/JS-Event-Loop/assets/js/app.25665c49.js" defer></script><script src="/JS-Event-Loop/assets/js/2.83f650ae.js" defer></script><script src="/JS-Event-Loop/assets/js/10.af646ce3.js" defer></script>
+  </body>
+</html>
